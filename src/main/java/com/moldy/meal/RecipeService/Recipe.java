@@ -4,14 +4,14 @@ import jakarta.persistence.*;
 
 @Entity
 @Table(name = "recipe")
-public class RecipeService {
+public class Recipe {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "recipe_id")
     private int recipeID = 0;
 
-    @Column(name = "recipe", nullable = false)
-    private String recipe;
+    @Column(name = "instructions", nullable = false)
+    private String instructions;
 
     @Column(name = "ingredient", nullable = false)
     private String ingredient;
@@ -19,19 +19,13 @@ public class RecipeService {
     @Column(name = "recipe_name", nullable = false)
     private String recipeName;
 
-    public RecipeService(String recipe, String ingredient, String recipeName){
-        this.recipe = recipe;
+    //default for JPA
+    public Recipe(){}
+
+    public Recipe(String instructions, String ingredient, String recipeName){
+        this.instructions = instructions;
         this.ingredient = ingredient;
         this.recipeName = recipeName;
-    }
-
-
-    public String getRecipe() {
-        return recipe;
-    }
-
-    public void setRecipe(String recipe) {
-        this.recipe = recipe;
     }
 
     public String getIngredient() {
@@ -52,5 +46,13 @@ public class RecipeService {
 
     public int getRecipeID() {
         return recipeID;
+    }
+
+    public String getInstructions() {
+        return instructions;
+    }
+
+    public void setInstructions(String instructions) {
+        this.instructions = instructions;
     }
 }

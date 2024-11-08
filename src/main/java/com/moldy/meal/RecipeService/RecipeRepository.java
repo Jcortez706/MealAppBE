@@ -5,7 +5,7 @@ import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
 
-public interface RecipeRepository extends JpaRepository<RecipeService, Integer> {
-    @Query()
-    List<Integer> findAllRecipes();
+public interface RecipeRepository extends JpaRepository<Recipe, Integer> {
+    @Query("SELECT r.recipeID FROM Recipe r")
+    List<Integer> findAllRecipeID();
 }
