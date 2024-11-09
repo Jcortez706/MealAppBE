@@ -1,6 +1,7 @@
 package com.moldy.meal.RecipeService;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 
 @Entity
 @Table(name = "recipe")
@@ -54,5 +55,9 @@ public class Recipe {
 
     public void setInstructions(String instructions) {
         this.instructions = instructions;
+    }
+
+    public void setRecipeID(@NotNull int recipeID) {
+        this.recipeID = recipeID;
     }
 }
