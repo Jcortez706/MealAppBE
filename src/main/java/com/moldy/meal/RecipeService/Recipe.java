@@ -19,7 +19,7 @@ public class Recipe {
     @Column(name = "recipe_name", nullable = false)
     private String recipeName;
 
-    //default for JPA
+    //default constructor for JPA
     public Recipe(){}
 
     public Recipe(String instructions, String ingredient, String recipeName){
