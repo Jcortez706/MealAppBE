@@ -8,6 +8,7 @@ import com.moldy.meal.RecipeService.Utils.DTO.RequestRecipeDTOmock;
 import com.moldy.meal.RecipeService.Utils.DTO.ResponseRecipeDTO;
 import com.moldy.meal.RecipeService.Utils.DTO.ResponseRecipeDTOMock;
 import com.moldy.meal.RecipeService.Utils.Mapping.ConvertRecipeDTOtoRecipe;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,8 +18,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(RecipeController.class)
@@ -56,6 +56,7 @@ class RecipeControllerTest {
         mockRecipe.setIngredient("Flour, Sugar, Eggs, Butter");
         mockRecipe.setInstructions("Mix all ingredients thoroughly and bake at 350 degrees for 25 minutes.");
 
+
         ResponseRecipeDTO mockResponse = ResponseRecipeDTOMock.createMock();
 
         Mockito.when(recipeRepository.getByID(Mockito.anyInt())).thenReturn(mockRecipe);
@@ -67,6 +68,32 @@ class RecipeControllerTest {
                         .content(objectMapper.writeValueAsString(mockRecipe)))
                 .andExpect(status().isOk())
                 .andExpect(MockMvcResultMatchers.content().json(expectedResponseJson));
+    }
+
+    @Test
+    void testPutRecipe() throws Exception {
+        RequestRecipeDTO mockRecipe = RequestRecipeDTOmock.createMock();
+        Recipe convertedRecipe = new ConvertRecipeDTOtoRecipe(mockRecipe).getConvertedRecipe();
+
+        Recipe existingRecipe = new Recipe();
+        existingRecipe.setRecipeID(1);
+        existingRecipe.setRecipeName("Original Name");
+        existingRecipe.setIngredient("Original Ingredient");
+        existingRecipe.setInstructions("Original Instructions");
+
+        Mockito.when(recipeRepository.getByID(1)).thenReturn(existingRecipe);
+
+        mockMvc.perform(put("/recipe/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(mockRecipe)))
+                .andExpect(status().isOk())
+                .andExpect(MockMvcResultMatchers.content().string("updated"));
+
+        Assertions.assertEquals(convertedRecipe.getRecipeName(), existingRecipe.getRecipeName());
+        Assertions.assertEquals(convertedRecipe.getIngredient(), existingRecipe.getIngredient());
+        Assertions.assertEquals(convertedRecipe.getInstructions(), existingRecipe.getInstructions());
+
+        Mockito.verify(recipeRepository).save(existingRecipe);
     }
     
 }
