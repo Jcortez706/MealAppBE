@@ -19,32 +19,47 @@ public class RecipeController {
     RecipeRepository recipeRepository;
 
     @GetMapping("/{id}")
-    ResponseEntity<ResponseRecipeDTO> getRecipe(@PathVariable("id") Integer id) {
-        Recipe recipe = recipeRepository.getByID(id);
-        ResponseRecipeDTO response = new ConvertResponseRecipeDTOToRecipe(recipe).getConvertedRecipeDTO();
-        return ResponseEntity.ok(response);
+    ResponseEntity<String> getRecipe(@PathVariable("id") Integer id) {
+        try {
+            Recipe recipe = recipeRepository.getByID(id);
+            if (recipe == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Recipe not found");
+            }
+            ResponseRecipeDTO response = new ConvertResponseRecipeDTOToRecipe(recipe).getConvertedRecipeDTO();
+            return ResponseEntity.ok(response.toString());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body("Error finding recipe");
+        }
     }
     @PostMapping
     ResponseEntity<String> postRecipe(@Valid @RequestBody RequestRecipeDTO recipe) {
-        Recipe recipePost = new ConvertRecipeDTOtoRecipe(recipe).getConvertedRecipe();
-        recipeRepository.save(recipePost);
-        return ResponseEntity.ok("valid");
+        try {
+            Recipe recipePost = new ConvertRecipeDTOtoRecipe(recipe).getConvertedRecipe();
+            recipeRepository.save(recipePost);
+            return ResponseEntity.ok("valid");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body("Recipe could not be saved");
+        }
     }
 
     @PutMapping("/{id}")
     ResponseEntity<String> updateRecipe(@Valid @RequestBody RequestRecipeDTO recipe, @PathVariable("id") Integer id) {
-        Recipe recipePut = new ConvertRecipeDTOtoRecipe(recipe).getConvertedRecipe();
-        Recipe updateRecipe = recipeRepository.getByID(id);
+        try {
+            Recipe recipePut = new ConvertRecipeDTOtoRecipe(recipe).getConvertedRecipe();
+            Recipe updateRecipe = recipeRepository.getByID(id);
 
-        if (updateRecipe == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Recipe not found");
+            if (updateRecipe == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Recipe not found");
+            }
+            updateRecipe.setRecipeName(recipePut.getRecipeName());
+            updateRecipe.setInstructions(recipePut.getInstructions());
+            updateRecipe.setIngredient(recipePut.getIngredient());
+
+            recipeRepository.save(updateRecipe);
+
+            return ResponseEntity.ok("Updated");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body("Error updating carrier");
         }
-        updateRecipe.setRecipeName(recipePut.getRecipeName());
-        updateRecipe.setInstructions(recipePut.getInstructions());
-        updateRecipe.setIngredient(recipePut.getIngredient());
-
-        recipeRepository.save(updateRecipe);
-
-        return ResponseEntity.ok("updated");
     }
 }
