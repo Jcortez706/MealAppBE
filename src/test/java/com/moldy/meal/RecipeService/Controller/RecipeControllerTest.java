@@ -1,6 +1,7 @@
 package com.moldy.meal.RecipeService.Controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.moldy.meal.RecipeService.Recipe;
 import com.moldy.meal.RecipeService.Repository.RecipeRepository;
 import com.moldy.meal.RecipeService.Utils.DTO.RequestRecipeDTO;
@@ -8,6 +9,7 @@ import com.moldy.meal.RecipeService.Utils.DTO.RequestRecipeDTOmock;
 import com.moldy.meal.RecipeService.Utils.DTO.ResponseRecipeDTO;
 import com.moldy.meal.RecipeService.Utils.DTO.ResponseRecipeDTOMock;
 import com.moldy.meal.RecipeService.Utils.Mapping.ConvertRecipeDTOtoRecipe;
+import org.json.JSONObject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -17,6 +19,11 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -74,7 +81,7 @@ class RecipeControllerTest {
 
         ResponseRecipeDTO mockResponse = ResponseRecipeDTOMock.createMock();
 
-        Mockito.when(recipeRepository.getByID(Mockito.anyInt())).thenReturn(mockRecipe);
+        Mockito.when(recipeRepository.getByID(1)).thenReturn(mockRecipe);
 
         String expectedResponseJson = objectMapper.writeValueAsString(mockResponse);
 
@@ -82,7 +89,7 @@ class RecipeControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(mockRecipe)))
                 .andExpect(status().isOk())
-                .andExpect(MockMvcResultMatchers.content().json(expectedResponseJson));
+                .andExpect(MockMvcResultMatchers.content().string(expectedResponseJson));
     }
 
     @Test
@@ -128,7 +135,7 @@ class RecipeControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(mockRecipe)))
                 .andExpect(status().isOk())
-                .andExpect(MockMvcResultMatchers.content().string("updated"));
+                .andExpect(MockMvcResultMatchers.content().string("Updated"));
 
         Assertions.assertEquals(convertedRecipe.getRecipeName(), existingRecipe.getRecipeName());
         Assertions.assertEquals(convertedRecipe.getIngredient(), existingRecipe.getIngredient());
@@ -172,6 +179,31 @@ class RecipeControllerTest {
                 .andExpect(MockMvcResultMatchers.content().string("Recipe not found"));
 
     }
+
+    @Test
+    void getRandomRecipesShouldReturnRecipes() throws Exception {
+        // Mocking the recipe IDs returned by the repository
+        List<Integer> mockIDList = Arrays.asList(1, 2, 3, 4, 5); // Full list of IDs in DB
+        Mockito.when(recipeRepository.findAllRecipeID()).thenReturn(mockIDList);
+
+        // Define the expected JSON structure for a count of 2
+        ObjectMapper mapper = new ObjectMapper();
+        ObjectNode expectedResponse = mapper.createObjectNode();
+
+        // Simulate the expected result after shuffling and limiting
+        List<Integer> randomIds = mockIDList.subList(0, 2); // Simulate first 2 IDs
+        expectedResponse.putPOJO("recipes", randomIds);
+
+        // Perform the GET request and verify the response
+        mockMvc.perform(get("/recipe/random/2")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(MockMvcResultMatchers.content().json(expectedResponse.toString()));
+
+        // Verify repository interaction
+        Mockito.verify(recipeRepository, Mockito.times(1)).findAllRecipeID();
+    }
+
 
     
 }

@@ -1,5 +1,7 @@
 package com.moldy.meal.RecipeService.Controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.moldy.meal.RecipeService.Recipe;
 import com.moldy.meal.RecipeService.Repository.RecipeRepository;
 import com.moldy.meal.RecipeService.Utils.DTO.RequestRecipeDTO;
@@ -12,6 +14,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.lang.reflect.Array;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Random;
+
 @RestController
 @RequestMapping("/recipe")
 public class RecipeController {
@@ -19,17 +27,33 @@ public class RecipeController {
     RecipeRepository recipeRepository;
 
     @GetMapping("/{id}")
-    ResponseEntity<String> getRecipe(@PathVariable("id") Integer id) {
+    ResponseEntity<?> getRecipe(@PathVariable("id") Integer id) {
         try {
             Recipe recipe = recipeRepository.getByID(id);
             if (recipe == null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Recipe not found");
             }
             ResponseRecipeDTO response = new ConvertResponseRecipeDTOToRecipe(recipe).getConvertedRecipeDTO();
-            return ResponseEntity.ok(response.toString());
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body("Error finding recipe");
         }
+    }
+    @GetMapping("/random/{count}")
+    ResponseEntity<ObjectNode> getRandomRecipes(@PathVariable("count") Integer count) {
+        ObjectMapper mapper = new ObjectMapper();
+        ObjectNode jsonObject = mapper.createObjectNode();
+
+        List<Integer> recipeIDList = recipeRepository.findAllRecipeID();
+
+        Collections.shuffle(recipeIDList); // Randomize the list
+
+        List<Integer> randomIds = recipeIDList.stream().limit(count).toList();
+
+        jsonObject.putPOJO("recipes", randomIds);
+
+        return ResponseEntity.ok(jsonObject);
+
     }
     @PostMapping
     ResponseEntity<String> postRecipe(@Valid @RequestBody RequestRecipeDTO recipe) {
