@@ -1,6 +1,7 @@
 package com.moldy.meal.RecipeService;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 
 @Entity
 @Table(name = "recipe")
@@ -19,7 +20,7 @@ public class Recipe {
     @Column(name = "recipe_name", nullable = false)
     private String recipeName;
 
-    //default for JPA
+    //default constructor for JPA
     public Recipe(){}
 
     public Recipe(String instructions, String ingredient, String recipeName){
@@ -54,5 +55,9 @@ public class Recipe {
 
     public void setInstructions(String instructions) {
         this.instructions = instructions;
+    }
+
+    public void setRecipeID(@NotNull int recipeID) {
+        this.recipeID = recipeID;
     }
 }

@@ -1,6 +1,6 @@
 package com.moldy.meal;
 
-import com.moldy.meal.RecipeService.RecipeRepository;
+import com.moldy.meal.RecipeService.Repository.RecipeRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
