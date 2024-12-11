@@ -17,10 +17,9 @@ public class Recipe {
     @Column(name = "ingredient", nullable = false)
     private String ingredient;
 
-    @Column(name = "recipe_name", nullable = false)
+    @Column(name = "title", nullable = false)
     private String recipeName;
 
-    //default constructor for JPA
     public Recipe(){}
 
     public Recipe(String instructions, String ingredient, String recipeName){
