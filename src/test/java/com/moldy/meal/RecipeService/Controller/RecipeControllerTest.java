@@ -18,12 +18,14 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
 import java.util.Arrays;
 import java.util.List;
 
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(RecipeController.class)
@@ -35,39 +37,40 @@ class RecipeControllerTest {
     @MockBean
     private RecipeRepository recipeRepository;
 
-    @MockBean
+    @Autowired
     private RecipeController recipeController;
 
     @Autowired
     private ObjectMapper objectMapper;
 
+
     @Test
-    void postMethodShouldPass() throws Exception {
-        RequestRecipeDTO mockRecipe = RequestRecipeDTOmock.createMock();
+    public void testPostRecipe_Success() throws Exception {
+        RequestRecipeDTO mockRecipeDTO = RequestRecipeDTOmock.createMock();
 
-        Recipe recipe = new ConvertRecipeDTOtoRecipe(mockRecipe).getConvertedRecipe();
-
-        Mockito.when(recipeRepository.save(Mockito.any(Recipe.class))).thenReturn(recipe);
+        ResponseEntity<String> response = ResponseEntity.ok().body("valid");
+        when(recipeController.postRecipe(mockRecipeDTO)).thenReturn(response);
 
         mockMvc.perform(post("/recipe")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(mockRecipe)))
+                        .content(objectMapper.writeValueAsString(mockRecipeDTO)))
                 .andExpect(status().isOk())
-                .andExpect(MockMvcResultMatchers.content().string("valid"));
+                .andExpect(content().string(response.getBody()));
     }
 
+
     @Test
-    void postMethodShouldFail() throws Exception {
+    void testPostRecipe_Fail() throws Exception {
         RequestRecipeDTO mockRecipe = RequestRecipeDTOmock.createMock();
         Recipe recipe = new ConvertRecipeDTOtoRecipe(mockRecipe).getConvertedRecipe();
 
-        Mockito.when(recipeRepository.save(Mockito.any(Recipe.class))).thenThrow(new RuntimeException());
+        when(recipeRepository.save(Mockito.any(Recipe.class))).thenThrow(new RuntimeException());
 
         mockMvc.perform(post("/recipe")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(mockRecipe)))
                 .andExpect(status().isExpectationFailed())
-                .andExpect(MockMvcResultMatchers.content().string("Recipe could not be saved"));
+                .andExpect(content().string("Recipe could not be saved"));
     }
 
 
@@ -79,43 +82,42 @@ class RecipeControllerTest {
         mockRecipe.setIngredient("Flour, Sugar, Eggs, Butter");
         mockRecipe.setInstructions("Mix all ingredients thoroughly and bake at 350 degrees for 25 minutes.");
 
-
         ResponseRecipeDTO mockResponse = ResponseRecipeDTOMock.createMock();
 
-        Mockito.when(recipeRepository.getByID(1)).thenReturn(mockRecipe);
+        when(recipeRepository.getByID(1)).thenReturn(mockRecipe);
 
         String expectedResponseJson = objectMapper.writeValueAsString(mockResponse);
 
         mockMvc.perform(get("/recipe/1")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(mockRecipe)))
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(MockMvcResultMatchers.content().string(expectedResponseJson));
+                .andExpect(content().json(expectedResponseJson));
     }
+
 
     @Test
     void getMethodShouldNotFindRecipeByID() throws Exception {
         RequestRecipeDTO mockRecipe = RequestRecipeDTOmock.createMock();
 
-        Mockito.when(recipeRepository.getByID(1)).thenThrow(new RuntimeException());
+        when(recipeRepository.getByID(1)).thenThrow(new RuntimeException());
 
         mockMvc.perform(get("/recipe/0")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(mockRecipe)))
 
                 .andExpect(status().isNotFound())
-                .andExpect(MockMvcResultMatchers.content().string("Recipe not found"));
+                .andExpect(content().string("Recipe not found"));
 
     }
 
     @Test
     void getMethodShouldThrowException() throws Exception {
-        Mockito.when(recipeRepository.getByID(1)).thenThrow(new RuntimeException());
+        when(recipeRepository.getByID(1)).thenThrow(new RuntimeException());
 
         mockMvc.perform(get("/recipe/1")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isExpectationFailed())
-                .andExpect(MockMvcResultMatchers.content().string("Error finding recipe"));
+                .andExpect(content().string("Error finding recipe"));
     }
 
 
@@ -130,13 +132,13 @@ class RecipeControllerTest {
         existingRecipe.setIngredient("Original Ingredient");
         existingRecipe.setInstructions("Original Instructions");
 
-        Mockito.when(recipeRepository.getByID(1)).thenReturn(existingRecipe);
+        when(recipeRepository.getByID(1)).thenReturn(existingRecipe);
 
         mockMvc.perform(put("/recipe/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(mockRecipe)))
                 .andExpect(status().isOk())
-                .andExpect(MockMvcResultMatchers.content().string("Updated"));
+                .andExpect(content().string("Updated"));
 
         Assertions.assertEquals(convertedRecipe.getRecipeName(), existingRecipe.getRecipeName());
         Assertions.assertEquals(convertedRecipe.getIngredient(), existingRecipe.getIngredient());
@@ -156,28 +158,28 @@ class RecipeControllerTest {
         existingRecipe.setIngredient("Original Ingredient");
         existingRecipe.setInstructions("Original Instructions");
 
-        Mockito.when(recipeRepository.getByID(1)).thenThrow(new RuntimeException());
+        when(recipeRepository.getByID(1)).thenThrow(new RuntimeException());
 
         mockMvc.perform(put("/recipe/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(mockRecipe)))
 
                 .andExpect(status().isExpectationFailed())
-                .andExpect(MockMvcResultMatchers.content().string("Error updating carrier"));
+                .andExpect(content().string("Error updating carrier"));
     }
 
     @Test
     void updateMethodShouldNotFindRecipeByID() throws Exception {
         RequestRecipeDTO mockRecipe = RequestRecipeDTOmock.createMock();
 
-        Mockito.when(recipeRepository.getByID(1)).thenThrow(new RuntimeException());
+        when(recipeRepository.getByID(1)).thenThrow(new RuntimeException());
 
         mockMvc.perform(put("/recipe/0")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(mockRecipe)))
 
                 .andExpect(status().isNotFound())
-                .andExpect(MockMvcResultMatchers.content().string("Recipe not found"));
+                .andExpect(content().string("Recipe not found"));
 
     }
 
@@ -191,20 +193,29 @@ class RecipeControllerTest {
         expectedResponse.putPOJO("recipes", randomIds);
         ResponseEntity<ObjectNode> response = ResponseEntity.ok(expectedResponse); // Create a ResponseEntity with Ok status and data is the expectedResponse POJO
 
-        Mockito.when(recipeController.getRandomRecipes(2)).thenReturn(response);
-
+        when(recipeRepository.findAllRecipeID()).thenReturn(randomIds);
 
         mockMvc.perform(get("/recipe/random/2")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(MockMvcResultMatchers.content().json(expectedResponse.toString()));
+                .andExpect(content().json(expectedResponse.toString()));
     }
 
     @Test
     void deleteRecipesByID() throws Exception {
-        Mockito.when(recipeController.deleteRecipe(1)).thenReturn(ResponseEntity.ok("Deleted"));
+        // Create a mock recipe that will be "found" by the repository
+        Recipe mockRecipe = new Recipe();  // Add necessary fields if needed
+
+        // Mock the repository's getById method
+        when(recipeRepository.getByID(1)).thenReturn(mockRecipe);
+
+        // For the void delete method, use doNothing()
+        doNothing().when(recipeRepository).delete(mockRecipe);
+
+        // Now you can test the controller
         mockMvc.perform(delete("/recipe/1"))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(content().string("Deleted"));
     }
 
 
