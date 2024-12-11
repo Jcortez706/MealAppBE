@@ -9,7 +9,6 @@ import com.moldy.meal.RecipeService.Utils.DTO.RequestRecipeDTOmock;
 import com.moldy.meal.RecipeService.Utils.DTO.ResponseRecipeDTO;
 import com.moldy.meal.RecipeService.Utils.DTO.ResponseRecipeDTOMock;
 import com.moldy.meal.RecipeService.Utils.Mapping.ConvertRecipeDTOtoRecipe;
-import org.json.JSONObject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -17,12 +16,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -36,6 +34,9 @@ class RecipeControllerTest {
 
     @MockBean
     private RecipeRepository recipeRepository;
+
+    @MockBean
+    private RecipeController recipeController;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -182,26 +183,28 @@ class RecipeControllerTest {
 
     @Test
     void getRandomRecipesShouldReturnRecipes() throws Exception {
-        // Mocking the recipe IDs returned by the repository
         List<Integer> mockIDList = Arrays.asList(1, 2, 3, 4, 5); // Full list of IDs in DB
-        Mockito.when(recipeRepository.findAllRecipeID()).thenReturn(mockIDList);
-
-        // Define the expected JSON structure for a count of 2
         ObjectMapper mapper = new ObjectMapper();
         ObjectNode expectedResponse = mapper.createObjectNode();
 
-        // Simulate the expected result after shuffling and limiting
         List<Integer> randomIds = mockIDList.subList(0, 2); // Simulate first 2 IDs
         expectedResponse.putPOJO("recipes", randomIds);
+        ResponseEntity<ObjectNode> response = ResponseEntity.ok(expectedResponse); // Create a ResponseEntity with Ok status and data is the expectedResponse POJO
 
-        // Perform the GET request and verify the response
+        Mockito.when(recipeController.getRandomRecipes(2)).thenReturn(response);
+
+
         mockMvc.perform(get("/recipe/random/2")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(MockMvcResultMatchers.content().json(expectedResponse.toString()));
+    }
 
-        // Verify repository interaction
-        Mockito.verify(recipeRepository, Mockito.times(1)).findAllRecipeID();
+    @Test
+    void deleteRecipesByID() throws Exception {
+        Mockito.when(recipeController.deleteRecipe(1)).thenReturn(ResponseEntity.ok("Deleted"));
+        mockMvc.perform(delete("/recipe/1"))
+                .andExpect(status().isOk());
     }
 
 

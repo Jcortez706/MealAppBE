@@ -83,4 +83,15 @@ public class RecipeController {
             return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body("Error updating carrier");
         }
     }
+
+    @DeleteMapping("/{id}")
+    ResponseEntity<String> deleteRecipe(@PathVariable("id") Integer id) {
+        try {
+            Recipe recipe = recipeRepository.getByID(id);
+            recipeRepository.delete(recipe);
+            return ResponseEntity.ok("Deleted");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body("Error deleting carrier");
+        }
+    }
 }
